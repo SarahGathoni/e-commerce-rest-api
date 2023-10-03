@@ -24,6 +24,7 @@ router.put('/:id', verifyTokenAuth, async function(req, res){
             res.status(500).json(err);
           }
         });
+        
 
 // GET USER BY ID
 router.get("/find/:id", verifyTokenAdmin, async (req, res) => {
