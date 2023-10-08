@@ -8,5 +8,4 @@ const UserSchema  = new mongoose.Schema({
 },
 {timestamps:true}  //shows the time created and updated
 )
-
 module.exports = mongoose.model('User', UserSchema);

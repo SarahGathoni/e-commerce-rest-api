@@ -26,42 +26,53 @@ router.post('/register', async(req, res) => {
 
 //LOGIN
 router.post('/login', async (req, res) => {
-    const { user, password } = req.body;
-    if (!user || !password) {
-        return res.status(400).json({ 'message': 'Username and password are required' });
-    }
-
-    try {
-        const foundUser = await User.findOne({ username: user });
-        console.log('Received username:', user);
-
-        if (!foundUser) {
-            return res.status(401).json({ 'message': 'Wrong credentials' });
-        }
-
-        const decryptedPassword = CryptoJS.AES.decrypt(
-            foundUser.password,
-            process.env.PASS_SECRET
-        ).toString(CryptoJS.enc.Utf8);
-
-        if (decryptedPassword !== password) {
-            return res.status(401).json({ 'message': 'Wrong password' });
-        }
-
-        const accessToken = jwt.sign(
+    try{
+        const user = await User.findOne(
             {
-                id: foundUser._id,
-                isAdmin: foundUser.isAdmin
-            },
-            process.env.JWT_KEY,
-            { expiresIn: '3d' }
+                userName: req.body.user_name
+            }
         );
 
-        const { password, ...userWithoutPassword } = foundUser._doc;
-        res.status(200).json({ ...userWithoutPassword, accessToken });
+        
+        if(!user){
+            res.status(401).json('wrong credentials')
+            return;
+        }
 
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ 'message': 'Internal server error' });
+        const hashedPassword = CryptoJS.AES.decrypt(
+            user.password,
+            process.env.PASS_SECRET
+        );
+        console.log('Hashed Password:', hashedPassword);
+
+
+        const originalPassword = hashedPassword.toString(CryptoJS.enc.Utf8);
+        console.log(originalPassword)
+
+        
+            if(originalPassword !== req.body.password)return
+                console.log('Request Password:', req.body.password);
+                res.status(401).json("wrong password")
+                
+            
+
+        const accessToken = jwt.sign(
+        {
+            id: user._id,
+            isAdmin: user.isAdmin,
+        },
+        process.env.JWT_SEC,
+            {expiresIn:"3d"}
+        );
+  
+        const { password, ...others } = user._doc;  
+        res.status(200).json({...others, accessToken});
+
+    }catch(err){
+        res.status(500).json(err);
     }
+
 });
+
+
+module.exports = router;
